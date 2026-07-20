@@ -1,0 +1,15 @@
+{
+  "name": "career-copilot-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm --prefix app run lint",
+    "test": "npm --prefix app test",
+    "build:web": "npm --prefix app run build:web",
+    "check:secrets": "node scripts/detect-secrets.js"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
