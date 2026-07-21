@@ -3,6 +3,8 @@
 Dokumen ini WAJIB dibaca oleh setiap AI agent (Claude Code, atau agent lain)
 sebelum melakukan perubahan apapun ke codebase. Ini bukan saran, ini aturan keras.
 
+- docs/CONTEXT_HANDOFF.md berisi konteks strategis (kenapa keputusan
+  tertentu diambil) — WAJIB dibaca di awal setiap sesi baru.
 ---
 
 ## 0. Cara Baca Dokumen Ini
