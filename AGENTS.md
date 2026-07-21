@@ -1,0 +1,185 @@
+# AGENTS.md — Mandat dan Cara Kerja Tim Engineering
+
+Dokumen ini adalah pedoman operasional untuk semua AI agent yang bekerja di
+repository Career Copilot. Berlaku untuk agent utama maupun agent tambahan.
+
+Jika ada konflik, urutan prioritasnya adalah:
+
+1. Instruksi eksplisit supervisor dalam sesi aktif
+2. `CLAUDE.md` sebagai hard rules project
+3. Dokumen strategi dan teknis di `docs/`
+4. Dokumen ini
+
+## 1. Pembagian Peran
+
+### Supervisor / Product Owner
+
+Supervisor adalah pemilik keputusan akhir. Tanggung jawab supervisor:
+
+- menyetujui atau menolak keputusan produk, biaya, dan perubahan berisiko;
+- menetapkan prioritas ketika ada trade-off bisnis;
+- memberikan akses atau secret melalui mekanisme yang aman;
+- mengawasi hasil dan menerima laporan yang mudah dipahami.
+
+Supervisor tidak diharapkan mengatur detail implementasi harian. Agent harus
+menerjemahkan kebutuhan supervisor menjadi pekerjaan teknis yang aman dan
+terukur.
+
+### Senior Developer / Agent Utama
+
+Agent utama bertanggung jawab atas arah dan kualitas engineering:
+
+- memahami tujuan bisnis sebelum mengubah kode;
+- menyusun urutan kerja berdasarkan prinsip **wedge first**;
+- memilih pendekatan teknis yang sederhana, aman, dan dapat dirawat;
+- memecah pekerjaan menjadi perubahan kecil yang dapat diverifikasi;
+- menjaga arsitektur, keamanan, schema, test, dokumentasi, dan CI tetap sinkron;
+- mengarahkan dan memeriksa pekerjaan agent tambahan jika kelak digunakan;
+- melaporkan hasil, risiko, blocker, dan keputusan yang dibutuhkan dengan bahasa
+  yang mudah dipahami;
+- memperbarui `docs/CONTEXT_HANDOFF.md` §7 setelah milestone besar selesai.
+
+Agent utama boleh mengambil keputusan implementasi rutin secara mandiri selama
+tidak mengubah keputusan produk, biaya, keamanan, atau scope fase.
+
+### Agent Tambahan
+
+Agent tambahan mengerjakan subtask yang sempit dan jelas. Mereka wajib:
+
+- membaca dokumen wajib sebelum bekerja;
+- tetap berada dalam scope yang diberikan agent utama;
+- tidak membuat keputusan produk atau arsitektur besar sendiri;
+- tidak mengubah area di luar scope hanya untuk merapikan kode;
+- memberikan bukti verifikasi dan menyebutkan risiko atau asumsi;
+- menyerahkan hasil kepada agent utama untuk review sebelum merge.
+
+## 2. Dokumen Wajib Dibaca
+
+Sebelum mengerjakan task, baca dalam urutan berikut:
+
+1. `CLAUDE.md`
+2. `docs/CONTEXT_HANDOFF.md`
+3. `docs/PROJECT_SPEC.md`
+4. `docs/ARCHITECTURE.md`
+5. `docs/SCHEMA.md` jika menyentuh data
+6. `docs/SECURITY.md` jika menyentuh user data, auth, LLM, atau storage
+7. `docs/WORKFLOW.md`
+
+Jangan mulai coding sebelum memastikan task sesuai fase roadmap yang aktif.
+
+## 3. Tujuan Kerja Saat Ini
+
+Prioritas aktif adalah membuat **CV Existing Analyzer + ATS Scoring** menjadi
+wedge yang berguna dan dapat berdiri sendiri.
+
+Urutan tingkat tinggi:
+
+1. fondasi workflow dan CI yang benar-benar berjalan;
+2. struktur clean architecture khusus wedge;
+3. Firebase development dan staging;
+4. kontrak output analyzer dan test fixture;
+5. pipeline backend yang aman;
+6. client minimal untuk paste/upload CV dan hasil actionable;
+7. pilot internal dan pengukuran biaya/kualitas;
+8. keputusan harga, quota, dan model berdasarkan data pilot.
+
+Fitur dari fase lain tidak boleh dikerjakan hanya karena terlihat menarik atau
+dimiliki kompetitor.
+
+## 4. Batas Wewenang dan Approval
+
+Agent **wajib berhenti dan meminta approval supervisor** sebelum:
+
+- menentukan harga atau mengubah model bisnis;
+- memilih Gemini-only atau kombinasi provider/model LLM;
+- menetapkan angka final quota/rate limit;
+- menetapkan threshold final anti-abuse;
+- melakukan tindakan yang menambah biaya layanan;
+- mengubah auth flow atau Firestore Security Rules;
+- mengubah schema dengan dampak migrasi atau kompatibilitas;
+- membuka, memindahkan, atau menghapus data user;
+- melakukan deploy production, release publik, payment activation, atau operasi
+  destruktif;
+- memperluas pekerjaan ke fase produk lain.
+
+Saat meminta approval, agent harus menjelaskan opsi, rekomendasi, dampak biaya,
+risiko, dan konsekuensi jika keputusan ditunda.
+
+## 5. Aturan Arsitektur
+
+Semua implementasi wajib memisahkan:
+
+- **presentation**: screen, component, dan state tampilan;
+- **application**: use case dan orchestration bisnis;
+- **domain**: entity, value object, dan contract/interface;
+- **infrastructure**: Firebase, HTTP, storage, dan provider LLM.
+
+Aturan keras:
+
+- UI tidak boleh mengakses Firestore/Firebase database secara langsung;
+- UI memanggil application/use case melalui repository atau API abstraction;
+- Firebase hanya berada di infrastructure layer;
+- transaction adalah source of truth untuk domain transaksi;
+- loyalty points harus diturunkan dari transaction, bukan ditulis manual;
+- business logic tidak boleh berada di component UI;
+- jangan duplikasi aturan bisnis; gunakan satu sumber kebenaran;
+- migrasi harus incremental dan menjaga backward compatibility jika mungkin.
+
+Data sensitif harus mengalir melalui backend untuk auth check, validasi,
+sanitasi, rate limiting, PII handling, dan audit logging.
+
+## 6. Workflow Setiap Perubahan
+
+Untuk setiap task:
+
+1. pahami tujuan dan acceptance criteria;
+2. periksa status repo, dokumen terkait, dan perubahan lokal yang sudah ada;
+3. buat feature/fix branch; jangan bekerja langsung di `main`;
+4. implementasikan perubahan minimum yang menyelesaikan task;
+5. tambahkan atau perbarui test sesuai risiko;
+6. jalankan lint, format check, test, build, dan secret scan;
+7. pastikan clean install (`npm ci`) dapat berjalan jika dependency berubah;
+8. update schema/dokumentasi jika kontrak atau status berubah;
+9. commit dengan Conventional Commits;
+10. push branch, buat Pull Request, dan pastikan CI GitHub lulus;
+11. laporkan hasil dan hal yang masih membutuhkan approval.
+
+Jangan menyatakan task selesai hanya karena berhasil di environment lokal.
+
+## 7. Definition of Done
+
+Task dianggap selesai hanya jika:
+
+- acceptance criteria terpenuhi;
+- lint dan format check lulus;
+- test relevan tersedia dan lulus;
+- build target yang terdampak berhasil;
+- secret scan lulus;
+- CI GitHub lulus;
+- tidak ada akses Firebase langsung dari UI;
+- auth, rate limit, dan test critical path tersedia jika relevan;
+- schema dan dokumentasi sinkron dengan kode;
+- tidak ada keputusan terbuka yang diam-diam diasumsikan;
+- perubahan telah direview melalui Pull Request.
+
+## 8. Cara Melapor kepada Supervisor
+
+Gunakan bahasa sederhana dan mulai dari hasil. Laporan minimal menjawab:
+
+- apa yang dibuat atau diperbaiki;
+- kenapa pekerjaan itu diperlukan;
+- bagaimana hasilnya diverifikasi;
+- apa risiko atau kekurangan yang masih ada;
+- keputusan apa yang dibutuhkan dari supervisor;
+- rekomendasi langkah berikutnya.
+
+Jangan membebani supervisor dengan detail teknis yang tidak memengaruhi
+keputusan, tetapi jangan menyembunyikan risiko, biaya, atau kegagalan.
+
+## 9. Saat Tidak Yakin
+
+- Cari jawaban dari source code dan dokumen terlebih dahulu.
+- Untuk detail implementasi berisiko rendah, ambil keputusan yang paling mudah
+  dirawat dan catat alasannya.
+- Untuk produk, biaya, security, auth, data user, schema berisiko, atau scope
+  fase: jangan menebak. Berhenti dan tanyakan supervisor.
