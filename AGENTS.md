@@ -5,10 +5,10 @@ repository Career Copilot. Berlaku untuk agent utama maupun agent tambahan.
 
 Jika ada konflik, urutan prioritasnya adalah:
 
-1. Instruksi eksplisit supervisor dalam sesi aktif
-2. `CLAUDE.md` sebagai hard rules project
+1. Instruksi eksplisit supervisor dalam sesi aktif, selama tidak diam-diam
+   meminta pelanggaran keamanan atau hukum
+2. Hard constraints dalam dokumen ini
 3. Dokumen strategi dan teknis di `docs/`
-4. Dokumen ini
 
 ## 1. Pembagian Peran
 
@@ -57,7 +57,7 @@ Agent tambahan mengerjakan subtask yang sempit dan jelas. Mereka wajib:
 
 Sebelum mengerjakan task, baca dalam urutan berikut:
 
-1. `CLAUDE.md`
+1. `AGENTS.md`
 2. `docs/CONTEXT_HANDOFF.md`
 3. `docs/PROJECT_SPEC.md`
 4. `docs/ARCHITECTURE.md`
@@ -65,9 +65,38 @@ Sebelum mengerjakan task, baca dalam urutan berikut:
 6. `docs/SECURITY.md` jika menyentuh user data, auth, LLM, atau storage
 7. `docs/WORKFLOW.md`
 
-Jangan mulai coding sebelum memastikan task sesuai fase roadmap yang aktif.
+`CLAUDE.md` hanya entry point kompatibilitas untuk Claude dan mengarahkan kembali
+ke dokumen ini. Jangan mulai coding sebelum memastikan task sesuai fase roadmap
+yang aktif.
 
-## 3. Tujuan Kerja Saat Ini
+## 3. Hard Constraints
+
+Aturan berikut tidak boleh dilanggar:
+
+1. Secret dan API key tidak boleh ditulis di source code. Semua harus melalui
+   environment variable dan `.env.example` harus tetap sinkron.
+2. Semua endpoint yang menyentuh data user wajib melakukan auth check.
+3. Client tidak boleh menulis data sensitif, hasil analisis/generasi, quota,
+   atau payment status langsung ke Firestore. Semua melewati backend yang
+   memvalidasi dan menyanitasi input.
+4. Nama asli dan kontak harus di-redact atau diganti placeholder sebelum
+   dikirim ke provider LLM ketika hal itu tidak merusak kualitas hasil.
+5. Semua fitur yang memanggil LLM wajib melewati rate limiting.
+6. Perubahan auth, payment, atau akses data wajib memiliki test untuk critical
+   path sebelum merge.
+7. Firestore Security Rules tidak boleh diubah atau di-deploy tanpa review dan
+   approval eksplisit supervisor.
+8. Konten karier atau company insight tidak boleh mengklaim kepastian tanpa
+   grounding atau sumber yang memadai.
+9. Jangan mengerjakan fitur dari fase yang belum aktif tanpa instruksi eksplisit
+   supervisor.
+10. Jangan melakukan perubahan production atau tindakan destruktif berdasarkan
+    asumsi.
+
+Jika sebuah task bertentangan dengan aturan ini, agent harus berhenti,
+menjelaskan konflik dan risikonya, lalu meminta arahan supervisor.
+
+## 4. Tujuan Kerja Saat Ini
 
 Prioritas aktif adalah membuat **CV Existing Analyzer + ATS Scoring** menjadi
 wedge yang berguna dan dapat berdiri sendiri.
@@ -86,7 +115,7 @@ Urutan tingkat tinggi:
 Fitur dari fase lain tidak boleh dikerjakan hanya karena terlihat menarik atau
 dimiliki kompetitor.
 
-## 4. Batas Wewenang dan Approval
+## 5. Batas Wewenang dan Approval
 
 Agent **wajib berhenti dan meminta approval supervisor** sebelum:
 
@@ -105,7 +134,7 @@ Agent **wajib berhenti dan meminta approval supervisor** sebelum:
 Saat meminta approval, agent harus menjelaskan opsi, rekomendasi, dampak biaya,
 risiko, dan konsekuensi jika keputusan ditunda.
 
-## 5. Aturan Arsitektur
+## 6. Aturan Arsitektur
 
 Semua implementasi wajib memisahkan:
 
@@ -128,7 +157,28 @@ Aturan keras:
 Data sensitif harus mengalir melalui backend untuk auth check, validasi,
 sanitasi, rate limiting, PII handling, dan audit logging.
 
-## 6. Workflow Setiap Perubahan
+Implementasi platform-specific harus menggunakan file `.native.js` dan
+`.web.js` ketika perbedaannya material. Hindari percabangan `Platform.OS` yang
+tersebar. Semua akses penyimpanan harus melalui abstraction di
+`services/storage`.
+
+Untuk kode yang menyentuh Expo API, verifikasi terhadap dokumentasi Expo SDK 57;
+jangan mengandalkan perilaku versi lain.
+
+## 7. Standar Kode
+
+- Gunakan camelCase untuk variable/function dan PascalCase untuk component.
+- Gunakan kebab-case untuk file non-component.
+- Jangan tinggalkan `console.log`; gunakan structured logger.
+- Ikuti ESLint dan Prettier yang dikunci repository.
+- Gunakan Conventional Commits: `feat:`, `fix:`, `chore:`, `refactor:`,
+  `docs:`, atau `test:`.
+- Hindari duplikasi dan refactor besar yang tidak diperlukan task.
+- Pertahankan backward compatibility bila memungkinkan.
+- Jangan menambah field atau collection tanpa memeriksa dan memperbarui
+  `docs/SCHEMA.md`.
+
+## 8. Workflow Setiap Perubahan
 
 Untuk setiap task:
 
@@ -146,7 +196,7 @@ Untuk setiap task:
 
 Jangan menyatakan task selesai hanya karena berhasil di environment lokal.
 
-## 7. Definition of Done
+## 9. Definition of Done
 
 Task dianggap selesai hanya jika:
 
@@ -156,13 +206,15 @@ Task dianggap selesai hanya jika:
 - build target yang terdampak berhasil;
 - secret scan lulus;
 - CI GitHub lulus;
+- tidak ada secret atau konfigurasi sensitif di source code;
 - tidak ada akses Firebase langsung dari UI;
 - auth, rate limit, dan test critical path tersedia jika relevan;
+- Firestore Rules telah direview jika task menyentuhnya;
 - schema dan dokumentasi sinkron dengan kode;
 - tidak ada keputusan terbuka yang diam-diam diasumsikan;
 - perubahan telah direview melalui Pull Request.
 
-## 8. Cara Melapor kepada Supervisor
+## 10. Cara Melapor kepada Supervisor
 
 Gunakan bahasa sederhana dan mulai dari hasil. Laporan minimal menjawab:
 
@@ -176,7 +228,18 @@ Gunakan bahasa sederhana dan mulai dari hasil. Laporan minimal menjawab:
 Jangan membebani supervisor dengan detail teknis yang tidak memengaruhi
 keputusan, tetapi jangan menyembunyikan risiko, biaya, atau kegagalan.
 
-## 9. Saat Tidak Yakin
+## 11. Efisiensi Kerja Agent
+
+- Batasi satu task utama per perubahan atau checkpoint.
+- Cari lokasi relevan terlebih dahulu; jangan membaca atau menulis ulang file
+  besar tanpa kebutuhan.
+- Pilih modifikasi minimum yang menyelesaikan masalah.
+- Jangan melakukan refactor sampingan hanya karena menemukan kode yang kurang
+  ideal; catat sebagai follow-up jika tidak menghalangi task.
+- Untuk keputusan arsitektur baru, ajukan usulan singkat dan tunggu approval
+  sebelum implementasi besar.
+
+## 12. Saat Tidak Yakin
 
 - Cari jawaban dari source code dan dokumen terlebih dahulu.
 - Untuk detail implementasi berisiko rendah, ambil keputusan yang paling mudah
