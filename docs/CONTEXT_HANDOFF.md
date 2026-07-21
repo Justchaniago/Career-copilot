@@ -143,8 +143,9 @@ friction install sudah hilang).
 - [x] Branch protection GitHub (`main`: PR + CI wajib, conversation resolution,
       admin enforcement, force-push/deletion dilarang)
 - [x] Baseline unit test nyata; test suite tidak lagi lolos saat tidak ada test
-- [ ] Struktur clean architecture untuk wedge (`presentation`, `application`,
-      `infrastructure`) dan backend `functions/`
+- [x] Skeleton clean architecture untuk wedge (`domain`, `application`,
+      `infrastructure`, `presentation`) + boundary backend `functions/`
+- [x] Kontrak repository dan `AnalyzeCvUseCase` provider-neutral dengan unit test
 - [ ] Firebase project setup (dev/staging)
 - [ ] Gemini API key
 - [ ] Cloud Functions untuk pipeline generate (belum dimulai)
