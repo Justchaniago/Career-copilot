@@ -18,6 +18,10 @@ Struktur folder yang wajib diikuti:
 ```
 /app
   /src
+    /domain             # entity/value object + repository contract murni
+    /application        # use case; bergantung pada domain contract
+    /infrastructure     # implementasi repository/API/storage/provider
+    /presentation       # screen/component/hook; tidak akses Firebase langsung
     /components         # shared UI, jalan di web & native
     /screens             # shared screens
     /services
@@ -37,6 +41,16 @@ functions/                 # Cloud Functions (backend logic)
 app.json
 eas.json                   # config build APK
 ```
+
+Dependency direction wajib mengarah ke dalam:
+
+```
+presentation → application → domain
+infrastructure ────────────→ domain
+```
+
+Application menerima repository melalui dependency injection. Pemilihan adapter
+HTTP/Firebase/provider dilakukan di composition root, bukan di use case atau UI.
 
 **Aturan platform-specific code:** gunakan ekstensi `.web.js` / `.native.js`
 untuk implementasi berbeda per platform. Jangan menyebarkan
